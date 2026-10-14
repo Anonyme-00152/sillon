@@ -1,26 +1,559 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ------------------------------------------------------------------ */
+/* Thèmes : "nuit" (sombre) et "craie" (clair), basculés par section  */
+/* ------------------------------------------------------------------ */
+:root,
+[data-theme="nuit"],
+[data-zone="nuit"] {
+  --bg: #0d0c0a;
+  --fg: #eee8dd;
+  --muted: #a49d91;
+  --line: rgb(238 232 221 / 0.14);
+  --line-strong: rgb(238 232 221 / 0.32);
+  --surface: rgb(238 232 221 / 0.05);
+  --accent: #ff6a2b;
+  --accent-ink: #0d0c0a;
+  color-scheme: dark;
+}
+
+[data-theme="craie"],
+[data-zone="craie"] {
+  --bg: #ebe5d9;
+  --fg: #15130f;
+  --muted: #5f594f;
+  --line: rgb(21 19 15 / 0.14);
+  --line-strong: rgb(21 19 15 / 0.34);
+  --surface: rgb(21 19 15 / 0.045);
+  --accent: #a8390c;
+  --accent-ink: #fff8f0;
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --header-h: 4.5rem;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-io: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* Les styles maison vivent dans des couches (@layer) : les utilitaires Tailwind,
+   déclarés dans la couche "utilities", gardent ainsi toujours la priorité. */
+
+/* ------------------------------------------------------------------ */
+/* Base                                                               */
+/* ------------------------------------------------------------------ */
+@layer base {
+html {
+  background: var(--bg);
+  color: var(--fg);
+  transition:
+    background-color 0.7s var(--ease),
+    color 0.7s var(--ease);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Lenis (scroll fluide) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+}
+
+@layer components {
+/* ------------------------------------------------------------------ */
+/* Typographie                                                        */
+/* ------------------------------------------------------------------ */
+.display,
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  text-wrap: balance;
+}
+.display {
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+}
+.title {
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+.display em,
+.title em {
+  font-style: italic;
+  color: var(--accent);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lede {
+  font-size: clamp(1.05rem, 1.2vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--muted);
+  text-wrap: pretty;
+  max-width: 34rem;
+}
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ------------------------------------------------------------------ */
+/* Mise en page                                                       */
+/* ------------------------------------------------------------------ */
+.shell {
+  padding-inline: var(--gutter);
+  margin-inline: auto;
+  max-width: 100rem;
+  width: 100%;
+}
+.section {
+  position: relative;
+  min-height: 100svh;
+  padding-block: calc(var(--header-h) + 3rem) 4rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile : le texte défile par-dessus le casque, on lui donne un fond dépoli. */
+@media (max-width: 767.98px) {
+  .m-panel {
+    position: relative;
+    padding: 1.25rem;
+    margin-inline: calc(var(--gutter) * -0.5);
+    border: 1px solid var(--line);
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--bg) 74%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+    backdrop-filter: blur(18px) saturate(1.1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Boutons                                                            */
+/* ------------------------------------------------------------------ */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding-inline: 1.4rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  isolation: isolate;
+  white-space: nowrap;
+  transition:
+    color 0.45s var(--ease),
+    border-color 0.45s var(--ease),
+    background-color 0.45s var(--ease);
+}
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  transform: translateY(101%);
+  transition: transform 0.55s var(--ease);
+}
+.btn:hover::before,
+.btn:focus-visible::before {
+  transform: translateY(0);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary::before,
+.btn-ghost::before {
+  background: var(--fg);
+}
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+  color: var(--bg);
+}
+.btn-ghost {
+  border: 1px solid var(--line-strong);
+  color: var(--fg);
+}
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+  border-color: var(--fg);
+}
+.btn-sm {
+  min-height: 2.5rem;
+  padding-inline: 1.1rem;
+  font-size: 0.875rem;
+}
+.btn .arrow {
+  transition: transform 0.5s var(--ease);
+}
+.btn:hover .arrow {
+  transform: translateX(3px);
+}
+
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.5s var(--ease);
+}
+.link-underline:hover,
+.link-underline:focus-visible,
+.link-underline[aria-current="page"] {
+  background-size: 100% 1px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Apparitions au scroll (uniquement si JS actif)                     */
+/* ------------------------------------------------------------------ */
+html.js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 1.75rem, 0);
+  transition:
+    opacity 1s var(--ease),
+    transform 1.2s var(--ease);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+html.js [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.line {
+  display: block;
+  overflow: clip;
+  overflow-clip-margin: 0.25em;
+}
+.line > span {
+  display: block;
+}
+html.js [data-lines] .line > span {
+  transform: translate3d(0, 110%, 0) rotate(2.5deg);
+  transform-origin: 0 100%;
+  transition: transform 1.25s var(--ease);
+  transition-delay: calc(var(--i, 0) * 90ms + var(--d, 0) * 1ms);
+}
+html.js [data-lines].is-in .line > span {
+  transform: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Préchargement                                                      */
+/* ------------------------------------------------------------------ */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #0d0c0a;
+  color: #eee8dd;
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1s var(--ease-io);
+  /* garde-fou : disparaît même si le JS ne démarre jamais */
+  animation: preloader-failsafe 0.6s 6s forwards;
+}
+.preloader[data-state="out"] {
+  clip-path: inset(0 0 100% 0);
+  pointer-events: none;
+}
+html[data-intro="skip"] .preloader,
+html:not(.js) .preloader {
+  display: none;
+}
+@keyframes preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Rideau de transition entre pages                                   */
+/* ------------------------------------------------------------------ */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background: var(--fg);
+  color: var(--bg);
+  transform: translate3d(0, 100%, 0);
+  visibility: hidden;
+}
+.curtain[data-phase="covering"],
+.curtain[data-phase="revealing"] {
+  visibility: visible;
+}
+.curtain[data-phase="covering"] {
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.7s var(--ease-io);
+  pointer-events: auto;
+}
+.curtain[data-phase="revealing"] {
+  transform: translate3d(0, -100%, 0);
+  transition: transform 0.85s var(--ease-io);
+}
+.curtain .curtain-word {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.6s var(--ease);
+}
+.curtain[data-phase="covering"] .curtain-word {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.25s;
+}
+
+/* ------------------------------------------------------------------ */
+/* En-tête                                                            */
+/* ------------------------------------------------------------------ */
+.site-header {
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.5s var(--ease),
+    border-color 0.5s var(--ease),
+    color 0.7s var(--ease);
+}
+.site-header[data-scrolled="true"] {
+  background-color: color-mix(in srgb, var(--bg) 80%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom-color: var(--line);
+}
+
+/* Égaliseur du bouton son */
+.eq span {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  height: 30%;
+  transition: height 0.3s var(--ease);
+}
+.eq[data-on="true"] span {
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+.eq[data-on="true"] span:nth-child(2) {
+  animation-delay: -0.35s;
+}
+.eq[data-on="true"] span:nth-child(3) {
+  animation-delay: -0.7s;
+}
+.eq[data-on="true"] span:nth-child(4) {
+  animation-delay: -0.15s;
+}
+@keyframes eq {
+  from {
+    height: 20%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+/* Indicateur de scroll */
+.scroll-cue {
+  position: relative;
+  width: 1px;
+  height: 3.5rem;
+  background: var(--line-strong);
+  overflow: hidden;
+}
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--fg);
+  transform: translateY(-100%);
+  animation: cue 2.2s var(--ease-io) infinite;
+}
+@keyframes cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* Étiquettes de la vue éclatée : un point sur la pièce, un trait, puis le texte
+   décalé de (--dx, --dy). L'élément lui-même est placé sur le point. */
+.part-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+.part-label .dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.part-label .rule {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--len);
+  height: 1px;
+  background: var(--line-strong);
+  transform-origin: 0 50%;
+  transform: rotate(var(--angle));
+}
+.part-label .text {
+  position: absolute;
+  left: var(--dx);
+  top: var(--dy);
+  white-space: nowrap;
+  transform: translate(0.5rem, -50%);
+}
+.part-label[data-align="end"] .text {
+  transform: translate(calc(-100% - 0.5rem), -50%);
+  text-align: right;
+}
+
+/* Interrupteur (réduction de bruit, animations) */
+.switch {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  transition:
+    background-color 0.35s var(--ease),
+    border-color 0.35s var(--ease);
+  flex: none;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--fg);
+  transform: translateY(-50%);
+  transition:
+    transform 0.4s var(--ease),
+    background-color 0.35s var(--ease);
+}
+[aria-checked="true"] > .switch,
+[aria-pressed="true"] > .switch {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+[aria-checked="true"] > .switch::after,
+[aria-pressed="true"] > .switch::after {
+  transform: translate(1.2rem, -50%);
+  background: var(--accent-ink);
+}
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations réduites (préférence système ou choix sur le site)      */
+/* ------------------------------------------------------------------ */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+html[data-motion="reduce"].js [data-reveal],
+html[data-motion="reduce"].js [data-lines] .line > span {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+html[data-motion="reduce"] .curtain {
+  transform: none;
+  opacity: 0;
+}
+html[data-motion="reduce"] .curtain[data-phase="covering"] {
+  opacity: 1;
+  transition: opacity 0.18s linear;
+}
+html[data-motion="reduce"] .curtain[data-phase="revealing"] {
+  opacity: 0;
+  transition: opacity 0.25s linear;
+}
+html[data-motion="reduce"] .preloader {
+  display: none;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
